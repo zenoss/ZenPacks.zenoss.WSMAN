@@ -19,7 +19,6 @@ def addLocalLibPath():
 
     site.addsitedir(os.path.join(os.path.dirname(__file__), 'lib'))
 
-'''
 def result_errmsg(result):
     """Return a useful error message string given a twisted errBack result."""
     try:
@@ -40,4 +39,3 @@ def result_errmsg(result):
         pass
 
     return str(result)
-'''
