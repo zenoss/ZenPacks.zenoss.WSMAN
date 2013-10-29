@@ -31,3 +31,4 @@ build:
 clean:
 	rm -rf lib build dist *.egg-info
 	cd $(PYWSMAN_DIR) ; rm -rf build dist *.egg-info
+	cd ${LIB_DIR} ; rm -rf *.egg site* easy-install.pth 
