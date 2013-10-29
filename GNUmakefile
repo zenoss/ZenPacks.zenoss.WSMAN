@@ -21,6 +21,7 @@ egg:
 	python setup.py bdist_egg
 
 build:
+	mkdir -p ${LIB_DIR} ; \
 	cd $(PYWBEM_DIR) ; \
 		PYTHONPATH="$(PYTHONPATH):$(LIB_DIR)" \
 		$(PYTHON) setup.py install \

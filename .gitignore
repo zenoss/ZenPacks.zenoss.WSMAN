@@ -2,4 +2,4 @@ build
 dist
 *.egg-info
 *.pyc
-zenoss/WSMAN/lib/*
+ZenPacks/zenoss/WSMAN/lib
