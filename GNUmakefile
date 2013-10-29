@@ -9,7 +9,7 @@
 
 PYTHON=$(shell which python)
 HERE=$(PWD)
-PYWBEM_DIR=$(HERE)/src/pywsman
+PYWSMAN_DIR=$(HERE)/src/pywsman
 ZP_DIR=$(HERE)/ZenPacks/zenoss/WSMAN
 LIB_DIR=$(ZP_DIR)/lib
 BIN_DIR=$(ZP_DIR)/bin
@@ -22,7 +22,7 @@ egg:
 
 build:
 	mkdir -p ${LIB_DIR} ; \
-	cd $(PYWBEM_DIR) ; \
+	cd $(PYWSMAN_DIR) ; \
 		PYTHONPATH="$(PYTHONPATH):$(LIB_DIR)" \
 		$(PYTHON) setup.py install \
 		--install-lib="$(LIB_DIR)" \
