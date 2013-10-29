@@ -55,7 +55,7 @@ class WSMANDataSource(PythonDataSource):
 
     namespace = ''
     query_language = 'CQL'  # hard-coded for now.
-    query = ''
+    CIMClass = ''
     result_component_key = ''
     result_component_value = ''
     result_timestamp_key = ''
@@ -63,7 +63,7 @@ class WSMANDataSource(PythonDataSource):
     _properties = PythonDataSource._properties + (
         {'id': 'namespace', 'type': 'string'},
         {'id': 'query_language', 'type': 'string'},
-        {'id': 'query', 'type': 'lines'},
+        {'id': 'CIMCLass', 'type': 'string'},
         {'id': 'result_component_key', 'type': 'string'},
         {'id': 'result_component_value', 'type': 'string'},
         {'id': 'result_timestamp_key', 'type': 'string'},
@@ -78,9 +78,9 @@ class IWSMANDataSourceInfo(IRRDDataSourceInfo):
         group=_t('WSMAN'),
         title=_t('Namespace'))
 
-    query = schema.Text(
+    CIMClass = schema.Text(
         group=_t(u'WSMAN'),
-        title=_t('CQL Query'),
+        title=_t('CIM Class'),
         xtype='twocolumntextarea')
 
     result_component_key = schema.TextLine(
@@ -105,7 +105,7 @@ class WSMANDataSourceInfo(RRDDataSourceInfo):
     cycletime = ProxyProperty('cycletime')
 
     namespace = ProxyProperty('namespace')
-    query = ProxyProperty('query')
+    CIMClass = ProxyProperty('CIMClass')
     result_component_key = ProxyProperty('result_component_key')
     result_component_value = ProxyProperty('result_component_value')
     result_timestamp_key = ProxyProperty('result_timestamp_key')
@@ -113,7 +113,7 @@ class WSMANDataSourceInfo(RRDDataSourceInfo):
 
 class WSMANDataSourcePlugin(PythonDataSourcePlugin):
     proxy_attributes = (
-        'zWSMANPort', 'zWSMANUsername', 'zWSMANPassword', 'zWSMANUseSSL',
+        'zWSMANPort', 'zWSMANUsername', 'zWSMANPassword',
         )
 
     @classmethod
@@ -127,7 +127,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             datasource.plugin_classname,
             params.get('namespace'),
             params.get('query_language'),
-            params.get('query'),
+            params.get('CIMClass'),
             )
 
     @classmethod
@@ -138,7 +138,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             datasource.namespace, context)
 
         params['query_language'] = datasource.query_language
-        params['query'] = datasource.talesEval(
+        params['CIMClass'] = datasource.talesEval(
             ' '.join(string_to_lines(datasource.query)), context)
 
         params['result_component_key'] = datasource.talesEval(
@@ -157,7 +157,8 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         ds0 = config.datasources[0]
 
         credentials = (ds0.zWSMANUsername, ds0.zWSMANPassword)
-
+ 
+        '''
         factory = ExecQuery(
             credentials,
             ds0.params['query_language'],
@@ -177,6 +178,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                             factory=factory)
 
         return factory.deferred
+        '''
 
     def onSuccess(self, results, config):
         data = self.new_data()
