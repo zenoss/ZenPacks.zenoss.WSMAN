@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configure xmlns="http://namespaces.zope.org/zope">
+
+    <adapter
+        provides=".datasources.WSMANDataSource.IWSMANDataSourceInfo"
+        for=".datasources.WSMANDataSource.WSMANDataSource"
+        factory=".datasources.WSMANDataSource.WSMANDataSourceInfo"
+        />
+
+</configure>
