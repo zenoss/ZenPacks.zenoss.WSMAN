@@ -9,7 +9,7 @@
 
 PYTHON=$(shell which python)
 HERE=$(PWD)
-PYWSMAN_DIR=$(HERE)/src/pywsman
+TXWSMAN_DIR=$(HERE)/src/txwsman
 ZP_DIR=$(HERE)/ZenPacks/zenoss/WSMAN
 LIB_DIR=$(ZP_DIR)/lib
 BIN_DIR=$(ZP_DIR)/bin
@@ -20,15 +20,18 @@ egg:
 	# setup.py will call 'make build' before creating the egg
 	python setup.py bdist_egg
 
-build:
-	mkdir -p ${LIB_DIR} ; \
-	cd $(PYWSMAN_DIR) ; \
-		PYTHONPATH="$(PYTHONPATH):$(LIB_DIR)" \
-		$(PYTHON) setup.py install \
-		--install-lib="$(LIB_DIR)" \
-		--install-scripts="$(BIN_DIR)"
+build: | src/txwsman
+	cd $(TXWSMAN_DIR); git checkout master; git pull
+	rm -rf $(LIB_DIR)/txwsman
+	mkdir -p $(LIB_DIR)/txwsman/request
+	cp -r $(TXWSMAN_DIR)/txwsman/*.py $(LIB_DIR)/txwsman/
+	cp -r $(TXWSMAN_DIR)/txwsman/request/*.xml $(LIB_DIR)/txwsman/request/
+        
+src:
+	mkdir src
+
+src/txwsman: src
+	cd src; git clone https://github.com/zenoss/txwsman.git
 
 clean:
-	rm -rf lib build dist *.egg-info
-	cd $(PYWSMAN_DIR) ; rm -rf build dist *.egg-info
-	cd ${LIB_DIR} ; rm -rf *.egg site* easy-install.pth 
+	rm -rf lib build dist *.egg-info $(LIB_DIR)/txwsman src
