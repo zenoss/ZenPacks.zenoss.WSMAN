@@ -32,7 +32,8 @@ from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath, result_errmsg
 addLocalLibPath()
 
 from pywbem.twisted_client import ExecQuery
-
+from txwsman.enumerate import create_wsman_client
+from txwsman.util import ConnectionInfo
 
 def string_to_lines(string):
     if isinstance(string, (list, tuple)):
@@ -54,7 +55,7 @@ class WSMANDataSource(PythonDataSource):
     plugin_classname = 'ZenPacks.zenoss.WSMAN.datasources.WSMANDataSource.WSMANDataSourcePlugin'
 
     namespace = ''
-    query_language = 'CQL'  # hard-coded for now.
+    query_language = 'WQL'  # hard-coded for now.
     CIMClass = ''
     result_component_key = ''
     result_component_value = ''
@@ -155,10 +156,25 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
     def collect(self, config):
 
         ds0 = config.datasources[0]
+        conn_info = ConnectionInfo(config.manageIp,
+                                   'basic',
+                                   ds0.zWSMANUser,
+                                   ds0.zWSMANPassword,
+                                   'https',
+                                   '443',
+                                   'Keep-Alive', 
+                                   '')
+        client = create_wsman_client(conn_info)
 
-        credentials = (ds0.zWSMANUsername, ds0.zWSMANPassword)
- 
+
+
         '''
+            d = client.enumerate(config.className,
+                                 mode=config.mode,
+                                 ext=config.ext,
+                                 wql=config.wql,
+                                 maxelements=config.maxelements,
+                                 namespace=config.namespace)
         factory = ExecQuery(
             credentials,
             ds0.params['query_language'],

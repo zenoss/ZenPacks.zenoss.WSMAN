@@ -18,6 +18,7 @@ from Products.ZenRelations.zPropertyCategory import setzPropertyCategory
 setzPropertyCategory('zWSMANPort', 'WSMAN')
 setzPropertyCategory('zWSMANUsername', 'WSMAN')
 setzPropertyCategory('zWSMANPassword', 'WSMAN')
+setzPropertyCategory('zWSMANUseSSL', 'WSMAN')
 
 
 class ZenPack(ZenPackBase):
@@ -27,4 +28,5 @@ class ZenPack(ZenPackBase):
         ('zWSMANPort', '443', 'integer'),
         ('zWSMANUsername', '', 'string'),
         ('zWSMANPassword', '', 'password'),
+        ('zWSMANUseSSL', True, 'boolean'),
         ]

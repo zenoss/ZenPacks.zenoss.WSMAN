@@ -20,6 +20,7 @@ egg:
 	# setup.py will call 'make build' before creating the egg
 	python setup.py bdist_egg
 
+# pipe operator means src/txwsman must exist (as opposed to being more recent)
 build: | src/txwsman
 	cd $(TXWSMAN_DIR); git checkout master; git pull
 	rm -rf $(LIB_DIR)/txwsman

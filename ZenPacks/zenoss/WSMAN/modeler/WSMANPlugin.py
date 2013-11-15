@@ -26,22 +26,15 @@ set to succesfully pull data.
 
 """
 
-from twisted.internet import ssl, reactor
-from twisted.internet.defer import DeferredList
+from twisted.internet import defer
 
 from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 
-from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath, result_errmsg
+from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath
 
 addLocalLibPath()
 
-from pywbem.twisted_client import (
-    EnumerateClassNames,
-    EnumerateClasses,
-    EnumerateInstanceNames,
-    EnumerateInstances,
-    )
-
+import txwsman
 
 class WSMANPlugin(PythonPlugin):
 
@@ -52,44 +45,73 @@ class WSMANPlugin(PythonPlugin):
         'zWSMANUseSSL',
         )
 
-    wbemQueries = {}
+    wsman_queries = {}
 
+    def client(self, conn_info):
+        '''
+        Return a WSMAN Collect Client
+        '''
+        return txwsman.enumerate.create_wsman_client(conn_info)
+
+    def conn_info(self, device):
+        '''
+        Return a ConnectionInfo given device.
+        '''
+
+        hostname = device.manageIp
+        username = device.zWSMANUsername
+        auth_type = 'basic'
+        password = device.zWSMANPassword
+        scheme = 'https' if device.zWSMANUseSSL == True else 'http'
+        port = int(device.zWSMANPort)
+        connectiontype = 'Keep-Alive'
+        keytab = ''
+
+        return txwsman.util.ConnectionInfo(
+            hostname,
+            auth_type,
+            username,
+            password,
+            scheme,
+            port,
+            connectiontype,
+            keytab)
+
+
+    def create_enum_info(self, className, wql=None, namespace=None):
+        return txwsman.util.create_enum_info(className, wql, namespace)
+
+    @defer.inlineCallbacks
     def collect(self, device, log):
-        if not device.manageIp:
-            log.error('%s has no management IP address', device.id)
+        '''
+        Collect results of the class' queries list.
+        
+        This method should be overridden if more complex collection is required.
+        '''
 
-        if not device.zWSMANPort:
-            log.error("zWSMANPort empty for %s", device.id)
+        conn_info = self.conn_info(device)
+        client = self.client(conn_info)
+        
+        try:
+            results = yield client.do_enumerate( map(self.create_enum_info, self.wsman_queries, self.wsman_queries.values()))
+            import pdb;pdb.set_trace()
 
-        if not device.zWSMANUsername:
-            log.error("zWSMANUsername empty for %s", device.id)
+        except txwsman.util.RequestError as e:
+            log.error(e[0])
+            raise
 
-        if not device.zWSMANPassword:
-            log.error("zWSMANPassword empty for %s", device.id)
 
-        if not device.manageIp or \
-            not device.zWSMANPort or \
-            not device.zWSMANUsername or \
-            not device.zWSMANPassword:
-            return None
+        defer.returnValue(results)
 
-        deferreds = []
-
-        for wbemnamespace, wbemclass in self.wbemQueries.items():
-            namespaces = wbemnamespace.split(":")
-            namespace = namespaces[0]
-            if len(namespaces) > 1:
-                classname = namespaces[1]
-
-            userCreds = (device.zWSMANUsername, device.zWSMANPassword)
-
-            if wbemclass == 'ec':
-                wbemClass = EnumerateClasses(
-                    userCreds, namespace=namespace)
-
-            elif wbemclass == 'ecn':
-                wbemClass = EnumerateClassNames(
-                    userCreds, namespace=namespace)
+        '''
+        if not self.wql_queries:
+            pass
+    
+        try:
+            pass
+        except Exception as e:
+            log.error(e[0])
+            raise
 
             elif wbemclass == 'ei':
                 wbemClass = EnumerateInstances(
@@ -123,6 +145,7 @@ class WSMANPlugin(PythonPlugin):
         d.addCallback(self.check_results, device, log)
 
         return d
+        '''
 
     def check_results(self, results, device, log):
         """Check results for errors."""
