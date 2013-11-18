@@ -25,6 +25,12 @@ class ExampleModeler(WSMANPlugin):
          log.info("Modeler %s Processing data for device %s",
              self.name(), device.id)
          log.info("Example accessing a results metric: %s" % results[0][0].BusNumber)
-         import pdb;pdb.set_trace()
+
+         rm = self.relMap()
+         rm.append(self.objectMap({
+              'id': self.prepId(results[0][0].BusNumber)}))
+
+         return rm
+
 
 
