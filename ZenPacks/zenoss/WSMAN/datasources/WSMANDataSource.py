@@ -30,10 +30,8 @@ from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
 from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath, result_errmsg
 
 addLocalLibPath()
-
-from pywbem.twisted_client import ExecQuery
-from txwsman.enumerate import create_wsman_client
-from txwsman.util import ConnectionInfo
+from txwsman import util as txwsman_util
+from txwsman import enumerate as txwsman_enumerate
 
 def string_to_lines(string):
     if isinstance(string, (list, tuple)):
@@ -54,8 +52,9 @@ class WSMANDataSource(PythonDataSource):
 
     plugin_classname = 'ZenPacks.zenoss.WSMAN.datasources.WSMANDataSource.WSMANDataSourcePlugin'
 
-    namespace = ''
+    namespace = 'root/dcim'
     query_language = 'WQL'  # hard-coded for now.
+    query = ''
     CIMClass = ''
     result_component_key = ''
     result_component_value = ''
@@ -64,6 +63,7 @@ class WSMANDataSource(PythonDataSource):
     _properties = PythonDataSource._properties + (
         {'id': 'namespace', 'type': 'string'},
         {'id': 'query_language', 'type': 'string'},
+        {'id': 'query', 'type': 'string'},
         {'id': 'CIMCLass', 'type': 'string'},
         {'id': 'result_component_key', 'type': 'string'},
         {'id': 'result_component_value', 'type': 'string'},
@@ -81,7 +81,11 @@ class IWSMANDataSourceInfo(IRRDDataSourceInfo):
 
     CIMClass = schema.Text(
         group=_t(u'WSMAN'),
-        title=_t('CIM Class'),
+        title=_t('CIM Class'))
+
+    query = schema.Text(
+        group=_t(u'WSMAN'),
+        title=_t('Query'),
         xtype='twocolumntextarea')
 
     result_component_key = schema.TextLine(
@@ -107,6 +111,7 @@ class WSMANDataSourceInfo(RRDDataSourceInfo):
 
     namespace = ProxyProperty('namespace')
     CIMClass = ProxyProperty('CIMClass')
+    query = ProxyProperty('query')
     result_component_key = ProxyProperty('result_component_key')
     result_component_value = ProxyProperty('result_component_value')
     result_timestamp_key = ProxyProperty('result_timestamp_key')
@@ -114,7 +119,7 @@ class WSMANDataSourceInfo(RRDDataSourceInfo):
 
 class WSMANDataSourcePlugin(PythonDataSourcePlugin):
     proxy_attributes = (
-        'zWSMANPort', 'zWSMANUsername', 'zWSMANPassword',
+        'zWSMANPort', 'zWSMANUsername', 'zWSMANPassword', 'zWSMANUseSSL',
         )
 
     @classmethod
@@ -129,6 +134,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             params.get('namespace'),
             params.get('query_language'),
             params.get('CIMClass'),
+            params.get('query'),
             )
 
     @classmethod
@@ -139,8 +145,12 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             datasource.namespace, context)
 
         params['query_language'] = datasource.query_language
-        params['CIMClass'] = datasource.talesEval(
+
+        params['query'] = datasource.talesEval(
             ' '.join(string_to_lines(datasource.query)), context)
+
+        params['CIMClass'] = datasource.talesEval(
+            ' '.join(string_to_lines(datasource.CIMClass)), context)
 
         params['result_component_key'] = datasource.talesEval(
             datasource.result_component_key, context)
@@ -156,47 +166,41 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
     def collect(self, config):
 
         ds0 = config.datasources[0]
-        conn_info = ConnectionInfo(config.manageIp,
-                                   'basic',
-                                   ds0.zWSMANUser,
-                                   ds0.zWSMANPassword,
-                                   'https',
-                                   '443',
-                                   'Keep-Alive', 
-                                   '')
-        client = create_wsman_client(conn_info)
+        def conn_info(datasource, config):
+            ip = config.manageIp
+            username = datasource.zWSMANUsername
+            password = datasource.zWSMANPassword
+            auth_type = 'basic'
+            scheme = 'https' if datasource.zWSMANUseSSL == True else 'http'
+            port = int(datasource.zWSMANPort)
+            connectiontype = 'Keep-Alive'
+            keytab = ''
+            return txwsman_util.ConnectionInfo(
+                      ip,
+                      auth_type,
+                      username,
+                      password,
+                      scheme,
+                      port,
+                      connectiontype,
+                      keytab)
 
+        def client(conn_info):
+            return txwsman_enumerate.create_wsman_client(conn_info)
 
+        def create_enum_info(className, wql=None, namespace=None):
+            return txwsman_util.create_enum_info(className, wql, namespace)
 
-        '''
-            d = client.enumerate(config.className,
-                                 mode=config.mode,
-                                 ext=config.ext,
-                                 wql=config.wql,
-                                 maxelements=config.maxelements,
-                                 namespace=config.namespace)
-        factory = ExecQuery(
-            credentials,
-            ds0.params['query_language'],
-            ds0.params['query'],
-            namespace=ds0.params['namespace'])
+        connInfo = conn_info(ds0, config)
+        remote_client = client(connInfo)
+        enumInfo = create_enum_info(ds0.params['CIMClass'], ds0.params['query'], ds0.params['namespace'])
 
-        if ds0.zWBEMUseSSL:
-            reactor.connectSSL(
-                            host=ds0.manageIp,
-                            port=int(ds0.zWBEMPort),
-                            factory=factory,
-                            contextFactory=ssl.ClientContextFactory())
-        else:
-            reactor.connectTCP(
-                            host=ds0.manageIp,
-                            port=int(ds0.zWBEMPort),
-                            factory=factory)
-
-        return factory.deferred
-        '''
+        # Do Enumerate expects an array of enumInfo objects
+        d = remote_client.do_enumerate([enumInfo])
+        return d
 
     def onSuccess(self, results, config):
+        import pdb;pdb.set_trace()
         data = self.new_data()
 
         if not isinstance(results, list):
@@ -259,7 +263,8 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         return data
 
     def onError(self, result, config):
-        errmsg = 'WBEM: %s' % result_errmsg(result)
+        import pdb;pdb.set_trace()
+        errmsg = 'WSMAN: %s' % result_errmsg(result)
 
         log.error('%s %s', config.id, errmsg)
 

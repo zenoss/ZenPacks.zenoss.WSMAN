@@ -22,17 +22,18 @@ def addLocalLibPath():
 def result_errmsg(result):
     """Return a useful error message string given a twisted errBack result."""
     try:
-        from pywbem.cim_operations import CIMError
 
         if result.type == ConnectionRefusedError:
             return 'connection refused. Check IP and zWSMANPort'
         elif result.type == TimeoutError:
             return 'connection timeout. Check IP and zWSMANPort'
-        elif result.type == CIMError:
-            if '401' in result.value.args[1]:
-                return 'login failed. Check zWSMANUsername and zWSMANPassword'
-            else:
-                return result.value.args[1]
+        elif result.type == NameError:
+            return 'Invalid CIM Class.  Class not found.'
+#        elif result.type == CIMError:
+#            if '401' in result.value.args[1]:
+#                return 'login failed. Check zWSMANUsername and zWSMANPassword'
+#            else:
+#                return result.value.args[1]
         else:
             return result.getErrorMessage()
     except AttributeError:
