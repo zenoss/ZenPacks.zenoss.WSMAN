@@ -200,8 +200,11 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         return d
 
     def onSuccess(self, results, config):
-        import pdb;pdb.set_trace()
         data = self.new_data()
+
+        # drop the dictionary key as its unneeded here.  We will only ever
+        # have one class
+        results = results.values()[0]
 
         if not isinstance(results, list):
             results = [results]
@@ -220,20 +223,21 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                 datasource = datasources.get(result[result_component_key])
 
                 if not datasource:
-                    log.debug("No datasource for result: %r", result.items())
                     continue
 
             else:
                 datasource = config.datasources[0]
 
-            if result_component_key and result_component_key in result:
+            if result_component_key and hasattr(result, result_component_key):
                 result_component_value = datasource.params.get(
                     'result_component_value')
 
                 if result_component_value != result[result_component_key]:
                     continue
-
-            component_id = prepId(datasource.component)
+            if datasource.component:
+                component_id = prepId(datasource.component)
+            else:
+                component_id = None
 
             # Determine the timestamp that the value was collected.
             result_timestamp_key = datasource.params.get(
@@ -249,29 +253,28 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                 timestamp = 'N'
 
             for datapoint in datasource.points:
-                if datapoint.id in result:
+                if hasattr(result, datapoint.id):
                     data['values'][component_id][datapoint.id] = \
-                        (result[datapoint.id], timestamp)
+                        (getattr(result, datapoint.id), timestamp)
+
 
         data['events'].append({
-            'eventClassKey': 'wbemCollectionSuccess',
-            'eventKey': 'wbemCollection',
-            'summary': 'WBEM: successful collection',
+            'eventClassKey': 'wsmanCollectionSuccess',
+            'eventKey': 'wsmanCollection',
+            'summary': 'WSMAN: successful collection',
             'device': config.id,
             })
-
         return data
 
     def onError(self, result, config):
-        import pdb;pdb.set_trace()
         errmsg = 'WSMAN: %s' % result_errmsg(result)
 
         log.error('%s %s', config.id, errmsg)
 
         data = self.new_data()
         data['events'].append({
-            'eventClassKey': 'wbemCollectionError',
-            'eventKey': 'wbemCollection',
+            'eventClassKey': 'wsmanCollectionError',
+            'eventKey': 'wsmanCollection',
             'summary': errmsg,
             'device': config.id,
             })
