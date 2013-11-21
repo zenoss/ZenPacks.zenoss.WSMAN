@@ -12,8 +12,6 @@ log = logging.getLogger('zen.WSMAN')
 
 import calendar
 
-from twisted.internet import reactor, ssl
-
 from zope.component import adapts
 from zope.interface import implements
 
@@ -27,11 +25,13 @@ from Products.Zuul.utils import ZuulMessageFactory as _t
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSource, PythonDataSourcePlugin
 
-from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath, result_errmsg, eventKey
+from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath,\
+    result_errmsg, eventKey
 
 addLocalLibPath()
 from txwsman import util as txwsman_util
 from txwsman import enumerate as txwsman_enumerate
+
 
 def string_to_lines(string):
     if isinstance(string, (list, tuple)):
@@ -50,7 +50,8 @@ class WSMANDataSource(PythonDataSource):
     sourcetypes = ('WSMAN',)
     sourcetype = sourcetypes[0]
 
-    plugin_classname = 'ZenPacks.zenoss.WSMAN.datasources.WSMANDataSource.WSMANDataSourcePlugin'
+    plugin_classname = 'ZenPacks.zenoss.WSMAN.datasources'\
+                       '.WSMANDataSource.WSMANDataSourcePlugin'
 
     namespace = 'root/dcim'
     query_language = 'WQL'  # hard-coded for now.
@@ -166,24 +167,24 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
     def collect(self, config):
 
         ds0 = config.datasources[0]
+
         def conn_info(datasource, config):
             ip = config.manageIp
             username = datasource.zWSMANUsername
             password = datasource.zWSMANPassword
             auth_type = 'basic'
-            scheme = 'https' if datasource.zWSMANUseSSL == True else 'http'
+            scheme = 'https' if datasource.zWSMANUseSSL is True else 'http'
             port = int(datasource.zWSMANPort)
             connectiontype = 'Keep-Alive'
             keytab = ''
-            return txwsman_util.ConnectionInfo(
-                      ip,
-                      auth_type,
-                      username,
-                      password,
-                      scheme,
-                      port,
-                      connectiontype,
-                      keytab)
+            return txwsman_util.ConnectionInfo(ip,
+                                               auth_type,
+                                               username,
+                                               password,
+                                               scheme,
+                                               port,
+                                               connectiontype,
+                                               keytab)
 
         def client(conn_info):
             return txwsman_enumerate.create_wsman_client(conn_info)
@@ -193,7 +194,9 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
 
         connInfo = conn_info(ds0, config)
         remote_client = client(connInfo)
-        enumInfo = create_enum_info(ds0.params['CIMClass'], ds0.params['query'], ds0.params['namespace'])
+        enumInfo = create_enum_info(ds0.params['CIMClass'],
+                                    ds0.params['query'],
+                                    ds0.params['namespace'])
 
         # Do Enumerate expects an array of enumInfo objects
         d = remote_client.do_enumerate([enumInfo])
@@ -212,8 +215,8 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         # Convert datasources to a dictionary with result_component_value as
         # the key. This allows us to avoid an inner loop below.
         datasources = dict(
-            (x.params.get('result_component_value', ''), x) \
-                for x in config.datasources)
+            (x.params.get('result_component_value', ''), x)
+            for x in config.datasources)
 
         result_component_key = \
             config.datasources[0].params['result_component_key']
@@ -256,7 +259,6 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                 if hasattr(result, datapoint.id):
                     data['values'][component_id][datapoint.id] = \
                         (getattr(result, datapoint.id), timestamp)
-
 
         data['events'].append({
             'eventClassKey': 'wsmanCollectionSuccess',

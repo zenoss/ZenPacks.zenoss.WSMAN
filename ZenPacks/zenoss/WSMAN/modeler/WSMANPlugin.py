@@ -36,6 +36,7 @@ addLocalLibPath()
 
 import txwsman
 
+
 class WSMANPlugin(PythonPlugin):
 
     deviceProperties = PythonPlugin.deviceProperties + (
@@ -62,7 +63,7 @@ class WSMANPlugin(PythonPlugin):
         username = device.zWSMANUsername
         auth_type = 'basic'
         password = device.zWSMANPassword
-        scheme = 'https' if device.zWSMANUseSSL == True else 'http'
+        scheme = 'https' if device.zWSMANUseSSL is True else 'http'
         port = int(device.zWSMANPort)
         connectiontype = 'Keep-Alive'
         keytab = ''
@@ -77,7 +78,6 @@ class WSMANPlugin(PythonPlugin):
             connectiontype,
             keytab)
 
-
     def create_enum_info(self, className, wql=None, namespace=None):
         return txwsman.util.create_enum_info(className, wql, namespace)
 
@@ -85,15 +85,19 @@ class WSMANPlugin(PythonPlugin):
     def collect(self, device, log):
         '''
         Collect results of the class' queries list.
-        
-        This method should be overridden if more complex collection is required.
+
+        This method should be overridden
+        if more complex collection is required.
         '''
 
         conn_info = self.conn_info(device)
         client = self.client(conn_info)
-        
+
         try:
-            results = yield client.do_enumerate( map(self.create_enum_info, self.wsman_queries, self.wsman_queries.values()))
+            results = yield client.do_enumerate(
+                map(self.create_enum_info,
+                    self.wsman_queries,
+                    self.wsman_queries.values()))
 
         except txwsman.util.RequestError as e:
             log.error(e[0])

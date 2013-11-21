@@ -19,14 +19,17 @@ def addLocalLibPath():
 
     site.addsitedir(os.path.join(os.path.dirname(__file__), 'lib'))
 
+
 def result_errmsg(result):
     """Return a useful error message string given a twisted errBack result."""
     try:
 
         if result.type == ConnectionRefusedError:
-            return 'connection refused. Check IP and zWSMANPort and SSL Settings'
+            return 'connection refused.'\
+                   ' Check IP and zWSMANPort and SSL Settings'
         elif result.type == TimeoutError:
-            return 'connection timeout. Check IP and zWSMANPort and SSL Settings'
+            return 'connection timeout.'\
+                   ' Check IP and zWSMANPort and SSL Settings'
         elif result.type == NameError:
             return 'Invalid CIM Class.  Class not found.'
 #        elif result.type == CIMError:
@@ -40,6 +43,7 @@ def result_errmsg(result):
         pass
 
     return str(result)
+
 
 def eventKey(config):
     '''Given a config, return an appropriate eventKey.'''
