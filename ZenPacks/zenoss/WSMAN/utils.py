@@ -40,3 +40,8 @@ def result_errmsg(result):
         pass
 
     return str(result)
+
+def eventKey(config):
+    '''Given a config, return an appropriate eventKey.'''
+    ds0 = config.datasources[0]
+    return '%s|%s|%s' % (ds0.plugin_classname, ds0.cycletime, ds0.datasource)

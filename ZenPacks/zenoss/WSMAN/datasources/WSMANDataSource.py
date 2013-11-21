@@ -27,7 +27,7 @@ from Products.Zuul.utils import ZuulMessageFactory as _t
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSource, PythonDataSourcePlugin
 
-from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath, result_errmsg
+from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath, result_errmsg, eventKey
 
 addLocalLibPath()
 from txwsman import util as txwsman_util
@@ -260,9 +260,11 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
 
         data['events'].append({
             'eventClassKey': 'wsmanCollectionSuccess',
-            'eventKey': 'wsmanCollection',
+            'eventClass': '/Status/Events',
+            'eventKey': eventKey(config),
             'summary': 'WSMAN: successful collection',
             'device': config.id,
+            'severity': 0,
             })
         return data
 
@@ -274,9 +276,11 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         data = self.new_data()
         data['events'].append({
             'eventClassKey': 'wsmanCollectionError',
-            'eventKey': 'wsmanCollection',
+            'eventClass': '/Status/Events',
+            'eventKey': eventKey(config),
             'summary': errmsg,
             'device': config.id,
+            'severity': 4,
             })
 
         return data
