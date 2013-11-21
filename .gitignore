@@ -4,3 +4,4 @@ dist
 *.pyc
 ZenPacks/zenoss/WSMAN/lib
 src
+*.swp
