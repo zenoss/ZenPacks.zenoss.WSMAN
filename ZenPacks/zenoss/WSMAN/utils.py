@@ -24,9 +24,9 @@ def result_errmsg(result):
     try:
 
         if result.type == ConnectionRefusedError:
-            return 'connection refused. Check IP and zWSMANPort'
+            return 'connection refused. Check IP and zWSMANPort and SSL Settings'
         elif result.type == TimeoutError:
-            return 'connection timeout. Check IP and zWSMANPort'
+            return 'connection timeout. Check IP and zWSMANPort and SSL Settings'
         elif result.type == NameError:
             return 'Invalid CIM Class.  Class not found.'
 #        elif result.type == CIMError:
