@@ -1,0 +1,76 @@
+{{ZenPack
+|Summary=Adds a ''WSMAN'' data source type and a ''WSMANPlugin'' base modeler plugin.
+|Maintainer=Zenoss, Inc.
+|Organization=Zenoss, Inc.
+|ZenPack name=ZenPacks.zenoss.WSMAN
+|Source URI=git://github.com/zenoss/ZenPacks.zenoss.WSMAN.git
+|Releases={{Release
+|Version=1.0.0
+|Tag=1.0.0
+|Release date=2014/01/04
+|Compatible with=Zenoss Core 4.2.x, Zenoss Resource Manager 4.1.x, Zenoss Resource Manager 4.2.x
+|Requires=PythonCollector
+}}
+|Devices=
+|Applications=
+|Binaries=
+}}
+This ZenPack provides a new ''WSMAN'' data source type that makes it easy to collect metrics from a WSMAN provider. It also provides a new ''WSMANPlugin'' modeler plugin base class that simplifies modeling devices and applications that support WSMAN.
+
+== WSMAN Data Source Type ==
+
+The ''WSMAN'' data source type added by this ZenPack allows you to add a WSMAN data source with the following new new data source properties.
+
+;Namespace
+: The WSMAN namespace. This must be specified and there is no default value. A common example would be root/dcim.
+
+;CIM Class
+: The CIM Class to query. This must be specified and there is no default value.
+
+;Query
+: The CQL query to execute that will return the desired record(s). This must be specified and there is no default value.
+
+;Result Component Key
+: Optional. Only used in cases where the WBEM data source is in a monitoring template that gets bound to components. In this case ''Result Component Key'' should be set to the attribute or column name that contains the component identifier in the result set of the CQL Query.
+
+;Result Component Value
+: Optional. Only used in cases where the WBEM data source is in a monitoring template that gets bound to components. In this case ''Result Component Value'' is the value that gets mapped to values in the ''Result Component Key'' column of the CQL result set. Typically this takes the form of a TALES expression such as ${here/id} or ${here/wbemInstanceId} if wbemInstanceID was modeled on your component.
+
+;Result Timestamp Key
+: Optional. Used in both device- and component-bound monitoring templates when the query result set has a column noting the time the data was originally collected. Like the ''Result Component Key'' this should be the name of an attribute or column name in the results. By default this will default to NOW as the collection time.
+
+== WSMANPlugin Modeler Plugin Base Class ==
+
+The ''WSMANPlugin'' modeler plugin base class allows you to create modeler plugins that do something with data that is returned from a WSMAN Enumerate call.
+
+See the following example of a modeler plugin.
+
+<syntaxhighlight lang="python
+from ZenPacks.zenoss.WSMAN.modeler.WSMANPlugin import WSMANPlugin
+
+"""Description of what MyWSMANPlugin does."""
+
+
+class MyWSMANPlugin(WSMANPlugin):
+    wsman_queries = {
+        'DCIM_EnclosureView': '',
+        'DCIM_SystemView': ''
+        }
+
+    def process(self, device, results, log):
+        log.info('Modeler %s processing data for device %s',
+            self.name(), device.id)
+
+        EnclosureView = results.get('DCIM_EnclosureView')
+        SystemView = results.get('DCIM_SystemView')
+
+        pe_maps = []
+        for inst in SystemView:
+            om = ObjectMap()
+            om.id = self.prepId(str(inst['ChassisName']))
+            om.model = inst['Model']
+            pe_maps.append(om)
+
+        return pe_maps
+</syntaxhighlight>
+{{ZenPackFooter}}
