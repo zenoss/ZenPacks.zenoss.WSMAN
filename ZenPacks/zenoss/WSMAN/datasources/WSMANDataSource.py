@@ -65,7 +65,7 @@ class WSMANDataSource(PythonDataSource):
         {'id': 'namespace', 'type': 'string'},
         {'id': 'query_language', 'type': 'string'},
         {'id': 'query', 'type': 'string'},
-        {'id': 'CIMCLass', 'type': 'string'},
+        {'id': 'CIMClass', 'type': 'string'},
         {'id': 'result_component_key', 'type': 'string'},
         {'id': 'result_component_value', 'type': 'string'},
         {'id': 'result_timestamp_key', 'type': 'string'},
