@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (C) Zenoss, Inc. 2012, all rights reserved.
+# Copyright (C) Zenoss, Inc. 2012-2018, all rights reserved.
 #
 # This content is made available according to terms specified in
 # License.zenoss under the directory where your Zenoss product is installed.
@@ -218,8 +218,8 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             (x.params.get('result_component_value', ''), x)
             for x in config.datasources)
 
-        result_component_key = \
-            config.datasources[0].params['result_component_key']
+        ds0 = config.datasources[0]
+        result_component_key = ds0.params['result_component_key']
 
         for result in results:
             if result_component_key:
@@ -227,9 +227,8 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
 
                 if not datasource:
                     continue
-
             else:
-                datasource = config.datasources[0]
+                datasource = ds0
 
             if result_component_key and hasattr(result, result_component_key):
                 result_component_value = datasource.params.get(
@@ -262,12 +261,12 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
 
         data['events'].append({
             'eventClassKey': 'wsmanCollectionSuccess',
-            'eventClass': '/Status/Events',
+            'eventClass': ds0.eventClass,
             'eventKey': eventKey(config),
             'summary': 'WSMAN: successful collection',
             'device': config.id,
             'severity': 0,
-            })
+        })
         return data
 
     def onError(self, result, config):
@@ -276,13 +275,14 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         log.error('%s %s', config.id, errmsg)
 
         data = self.new_data()
+        eventClass = config.datasources[0].eventClass
         data['events'].append({
             'eventClassKey': 'wsmanCollectionError',
-            'eventClass': '/Status/Events',
+            'eventClass': eventClass,
             'eventKey': eventKey(config),
             'summary': errmsg,
             'device': config.id,
             'severity': 4,
-            })
+        })
 
         return data
