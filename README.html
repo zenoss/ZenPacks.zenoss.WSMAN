@@ -1,0 +1,116 @@
+<style>
+div.thumbnail {
+    clear: right;
+    float: right;
+    margin: 0 0 10px 10px;
+    padding: 0px;
+    width: 320px;
+    font-size: small;
+    font-style: italic;
+}
+
+br.clear {
+    clear: right;
+}
+
+dd {
+    font-size: smaller;
+}
+</style>
+
+<h1 id="title">WSMAN ZenPack</h1>
+<p>This ZenPack provides a new <i>WSMAN</i> data source type that makes it easy to collect metrics from a WSMAN provider. It also provides a new <i>WSMANPlugin</i> modeler plugin base class that simplifies modeling devices and applications that support WSMAN.</p>
+
+<p>[zenoss-toc]</p>
+
+<h2 id="releases">Releases</h2>
+<dl id="release-1.0.2">
+    <dt>Version 1.0.2 <a class="external" href="https://zenoss.leapfile.net/" rel="nofollow">Download</a></dt>
+    <dd>Released: 2018-06-09</dd>
+    <dd>Compatible with Zenoss 4.2.5 - 6.1</dd>
+    <dd>Requires:
+        <a href="/product/zenpacks/pythoncollector">PythonCollector ZenPack</a>
+    </dd>
+</dl>
+
+<h2 id="features">Features</h2>
+<p>The following features are available to help you model and monitor information available via WSMAN.</p>
+
+<h3 id="feature-wsman-dataource-type">WSMAN Datasource Type</h3>
+<p>The <i>WSMAN</i> data source type added by this ZenPack allows you to add a WSMAN datasource with the following new new data source properties.</p>
+
+<dl>
+    <dt>Namespace</dt>
+    <dd>The WSMAN namespace. This must be specified and there is no default value. A common example would be root/dcim.</dd>
+
+    <dt>CIM Class</dt>
+    <dd>The CIM Class to query. This must be specified and there is no default value.</dd>
+
+    <dt>Query</dt>
+    <dd>Optional. The query to execute that will return the desired record(s). This must be specified and there is no default value.</dd>
+
+    <dt>Result Component Key</dt>
+    <dd>Optional. Only used in cases where the WSMAN data source is in a monitoring template that gets bound to components. In this case <i>Result Component Key</i> should be set to the attribute or column name that contains the component identifier in the result set of the Query.</dd>
+
+    <dt>Result Component Value</dt>
+    <dd>Optional. Only used in cases where the WSMAN data source is in a monitoring template that gets bound to components. In this case <i>Result Component Value</i> is the value that gets mapped to values in the <i>Result Component Key</i> column of the result set. Typically this takes the form of a TALES expression such as ${here/id} or ${here/wsmanInstanceId} if wsmanInstanceID was modeled on your component.</dd>
+
+    <dt>Result Timestamp Key</dt>
+    <dd>Optional. Used in both device- and component-bound monitoring templates when the query result set has a column noting the time the data was originally collected. Like the <i>Result Component Key</i> this should be the name of an attribute or column name in the results. By default this will default to NOW as the collection time.</dd>
+</dl>
+
+<h3 id="feature-wsmanplugin-modeler-plugin">WSMANPlugin Modeler Plugin</h3>
+<p>The <i>WSMANPlugin</i> modeler plugin base class allows you to create modeler plugins that do something with data that is returned from a WSMAN Enumerate call.</p>
+<p>See the following example of a modeler plugin.</p>
+
+<code>
+'''Description of what MyWSMANPlugin does.'''
+
+from ZenPacks.zenoss.WSMAN.modeler.WSMANPlugin import WSMANPlugin
+
+class MyWSMANPlugin(WSMANPlugin):
+    modname = 'ZenPacks.example.MyZenPack.MyChassis'
+    relname = 'mychassis'
+
+    wsman_queries = {
+        'DCIM_EnclosureView': '',
+        'DCIM_SystemView': '',
+    }
+
+    def process(self, device, results, log):
+        log.info('Modeler %s processing data for device %s', self.name(), device.id)
+
+        enclosureView = results.get('DCIM_EnclosureView')
+        systemView = results.get('DCIM_SystemView')
+
+        rm = self.relMap()
+
+        for inst in SystemView:
+            om = self.objectMap({
+                'id': self.prepId(str(inst['ChassisName'])),
+                'model': inst['Model'],
+            })
+
+            rm.append(om)
+
+        return rm
+</code>
+
+<h2 id="changes">Changes</h2>
+
+<h3 id="changes-1.0.2">1.0.2</h3>
+<ul>
+    <li>Prevent DEBUG txwsman logs when not at DEBUG log level. (SVC-920)</li>
+    <li>Add ability to configure Event Class for WSMAN Data Source. (ZPS-3371)</li>
+    <li>Tested with Zenoss Resource Manager 6.1.2.</li>
+</ul>
+
+<h3 id="changes-1.0.1">1.0.1</h3>
+<ul>
+    <li>Fix "CIMCLass" typo in WSMANDataSource.</li>
+</ul>
+
+<h3 id="changes-1.0.0">1.0.0</h3>
+<ul>
+    <li>Initial release.</li>
+</ul>
