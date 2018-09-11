@@ -34,6 +34,7 @@ class TestWSMANDataSourcePlugin(BaseTestCase):
             datasource = Stub(
                 component=component,
                 eventClass='',
+                severity=ZenEventClasses.Error,
                 params={'result_component_key': 'SASAddress',
                         'result_component_value': component},
                 device='test_device',
