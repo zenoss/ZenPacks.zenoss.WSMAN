@@ -282,7 +282,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             'eventKey': eventKey(config),
             'summary': errmsg,
             'device': config.id,
-            'severity': 4,
+            'severity': config.datasources[0].severity,
         })
 
         return data
