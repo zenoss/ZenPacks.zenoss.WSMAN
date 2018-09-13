@@ -8,17 +8,18 @@
 ##############################################################################
 
 import logging
-LOG = logging.getLogger('zen.WSMAN')
 
 from Products.ZenModel.ZenPack import ZenPackBase
 from Products.ZenRelations.zPropertyCategory import setzPropertyCategory
 
+LOG = logging.getLogger('zen.WSMAN')
 
 # Categorize our zProperties.
 setzPropertyCategory('zWSMANPort', 'WSMAN')
 setzPropertyCategory('zWSMANUsername', 'WSMAN')
 setzPropertyCategory('zWSMANPassword', 'WSMAN')
 setzPropertyCategory('zWSMANUseSSL', 'WSMAN')
+setzPropertyCategory('zWSMANCollectionInterval', 'WSMAN')
 
 
 class ZenPack(ZenPackBase):
@@ -29,4 +30,14 @@ class ZenPack(ZenPackBase):
         ('zWSMANUsername', '', 'string'),
         ('zWSMANPassword', '', 'password'),
         ('zWSMANUseSSL', True, 'boolean'),
+        ('zWSMANCollectionInterval', '300', 'integer')
         ]
+
+    packZProperties_data = {
+        'zWSMANCollectionInterval': {
+            'type': 'integer',
+            'description': ('Defines, in seconds, the default collection '
+                            'interval for WSMAN datasources.'),
+            'label': 'WSMAN datasources collection interval'
+        },
+    }
