@@ -54,6 +54,7 @@ class WSMANDataSource(PythonDataSource):
                        '.WSMANDataSource.WSMANDataSourcePlugin'
 
     namespace = 'root/dcim'
+    cycletime = '${here/zWSMANCollectionInterval}'
     query_language = 'WQL'  # hard-coded for now.
     query = ''
     CIMClass = ''
@@ -282,7 +283,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             'eventKey': eventKey(config),
             'summary': errmsg,
             'device': config.id,
-            'severity': 4,
+            'severity': config.datasources[0].severity,
         })
 
         return data
