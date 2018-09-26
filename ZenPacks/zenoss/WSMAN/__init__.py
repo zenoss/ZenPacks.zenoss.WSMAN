@@ -1,43 +1,65 @@
 ##############################################################################
 #
-# Copyright (C) Zenoss, Inc. 2012, all rights reserved.
+# Copyright (C) Zenoss, Inc. 2012-2018, all rights reserved.
 #
 # This content is made available according to terms specified in
 # License.zenoss under the directory where your Zenoss product is installed.
 #
 ##############################################################################
 
-import logging
-
 from Products.ZenModel.ZenPack import ZenPackBase
 from Products.ZenRelations.zPropertyCategory import setzPropertyCategory
 
-LOG = logging.getLogger('zen.WSMAN')
-
 # Categorize our zProperties.
-setzPropertyCategory('zWSMANPort', 'WSMAN')
-setzPropertyCategory('zWSMANUsername', 'WSMAN')
-setzPropertyCategory('zWSMANPassword', 'WSMAN')
-setzPropertyCategory('zWSMANUseSSL', 'WSMAN')
-setzPropertyCategory('zWSMANCollectionInterval', 'WSMAN')
+ZPROPERTY_CATEGORY = 'WSMAN'
+
+setzPropertyCategory('zWSMANPort', ZPROPERTY_CATEGORY)
+setzPropertyCategory('zWSMANUsername', ZPROPERTY_CATEGORY)
+setzPropertyCategory('zWSMANPassword', ZPROPERTY_CATEGORY)
+setzPropertyCategory('zWSMANUseSSL', ZPROPERTY_CATEGORY)
+setzPropertyCategory('zWSMANCollectionInterval', ZPROPERTY_CATEGORY)
 
 
 class ZenPack(ZenPackBase):
     """WSMAN ZenPack."""
 
     packZProperties = [
-        ('zWSMANPort', '443', 'integer'),
+        ('zWSMANPort', 443, 'int'),
         ('zWSMANUsername', '', 'string'),
         ('zWSMANPassword', '', 'password'),
         ('zWSMANUseSSL', True, 'boolean'),
-        ('zWSMANCollectionInterval', '300', 'integer')
+        ('zWSMANCollectionInterval', 300, 'int')
         ]
 
     packZProperties_data = {
+        'zWSMANPort': {
+            'category': ZPROPERTY_CATEGORY,
+            'label': 'WSMAN Port',
+            'description': 'TCP port of remote WSMAN service.',
+            'type': 'int',
+        },
+        'zWSMANUsername': {
+            'category': ZPROPERTY_CATEGORY,
+            'label': 'WSMAN Username',
+            'description': 'Username for remote WSMAN service.',
+            'type': 'string',
+        },
+        'zWSMANPassword': {
+            'category': ZPROPERTY_CATEGORY,
+            'label': 'WSMAN Password',
+            'description': 'Password for remote WSMAN service.',
+            'type': 'password',
+        },
+        'zWSMANUseSSL': {
+            'category': ZPROPERTY_CATEGORY,
+            'label': 'WSMAN SSL',
+            'description': 'Use SSL for remote WSMAN service.',
+            'type': 'boolean',
+        },
         'zWSMANCollectionInterval': {
-            'type': 'integer',
-            'description': ('Defines, in seconds, the default collection '
-                            'interval for WSMAN datasources.'),
-            'label': 'WSMAN datasources collection interval'
+            'category': ZPROPERTY_CATEGORY,
+            'label': 'WSMAN Datasource Collection Interval',
+            'description': 'Default interval (in seconds) between WSMAN datasource collections.',
+            'type': 'int',
         },
     }
