@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (C) Zenoss, Inc. 2012, all rights reserved.
+# Copyright (C) Zenoss, Inc. 2012-2018, all rights reserved.
 #
 # This content is made available according to terms specified in
 # License.zenoss under the directory where your Zenoss product is installed.
@@ -37,6 +37,10 @@ addLocalLibPath()
 import txwsman
 
 
+def create_enum_info(className, wql=None, namespace=None):
+    return txwsman.util.create_enum_info(className, wql, namespace)
+
+
 class WSMANPlugin(PythonPlugin):
 
     deviceProperties = PythonPlugin.deviceProperties + (
@@ -44,6 +48,7 @@ class WSMANPlugin(PythonPlugin):
         'zWSMANUsername',
         'zWSMANPassword',
         'zWSMANUseSSL',
+        'zWSMANMaxObjectCount',
         )
 
     wsman_queries = {}
@@ -78,9 +83,6 @@ class WSMANPlugin(PythonPlugin):
             connectiontype,
             keytab)
 
-    def create_enum_info(self, className, wql=None, namespace=None):
-        return txwsman.util.create_enum_info(className, wql, namespace)
-
     @defer.inlineCallbacks
     def collect(self, device, log):
         '''
@@ -93,14 +95,27 @@ class WSMANPlugin(PythonPlugin):
         conn_info = self.conn_info(device)
         client = self.client(conn_info)
 
-        try:
-            results = yield client.do_enumerate(
-                map(self.create_enum_info,
-                    self.wsman_queries,
-                    self.wsman_queries.values()))
+        enum_infos = map(
+            create_enum_info,
+            self.wsman_queries,
+            self.wsman_queries.values())
 
-        except txwsman.util.RequestError as e:
-            log.error(e[0])
-            raise
+        results = {}
+
+        for enum_info in enum_infos:
+            try:
+                results[enum_info.className] = yield client.enumerate(
+                    enum_info.className,
+                    wql=enum_info.wql,
+                    namespace=enum_info.namespace,
+                    maxelements=device.zWSMANMaxObjectCount)
+            except txwsman.util.RequestError as e:
+                if 'unauthorized' in e.message:
+                    raise
+                else:
+                    log.error(
+                        "%s, %s class name returned error: %s",
+                        device.id, enum_info.className, e.message)
+                    continue
 
         defer.returnValue(results)
