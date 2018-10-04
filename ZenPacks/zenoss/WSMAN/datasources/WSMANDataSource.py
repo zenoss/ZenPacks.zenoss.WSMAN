@@ -15,6 +15,8 @@ import calendar
 from zope.component import adapts
 from zope.interface import implements
 
+from twisted.internet import defer
+
 from Products.ZenUtils.Utils import prepId
 from Products.Zuul.form import schema
 from Products.Zuul.infos import ProxyProperty
@@ -121,7 +123,11 @@ class WSMANDataSourceInfo(RRDDataSourceInfo):
 
 class WSMANDataSourcePlugin(PythonDataSourcePlugin):
     proxy_attributes = (
-        'zWSMANPort', 'zWSMANUsername', 'zWSMANPassword', 'zWSMANUseSSL',
+        'zWSMANPort',
+        'zWSMANUsername',
+        'zWSMANPassword',
+        'zWSMANUseSSL',
+        'zWSMANMaxObjectCount',
         )
 
     @classmethod
@@ -165,6 +171,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
 
         return params
 
+    @defer.inlineCallbacks
     def collect(self, config):
 
         ds0 = config.datasources[0]
@@ -187,21 +194,16 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                                                connectiontype,
                                                keytab)
 
-        def client(conn_info):
-            return txwsman_enumerate.create_wsman_client(conn_info)
-
-        def create_enum_info(className, wql=None, namespace=None):
-            return txwsman_util.create_enum_info(className, wql, namespace)
-
         connInfo = conn_info(ds0, config)
-        remote_client = client(connInfo)
-        enumInfo = create_enum_info(ds0.params['CIMClass'],
-                                    ds0.params['query'],
-                                    ds0.params['namespace'])
+        remote_client = txwsman_enumerate.create_wsman_client(connInfo)
 
-        # Do Enumerate expects an array of enumInfo objects
-        d = remote_client.do_enumerate([enumInfo])
-        return d
+        result = yield remote_client.enumerate(
+            ds0.params['CIMClass'],
+            wql=ds0.params['query'],
+            namespace=ds0.params['namespace'],
+            maxelements=ds0.zWSMANMaxObjectCount)
+
+        defer.returnValue({ds0.params['CIMClass']: result})
 
     def onSuccess(self, results, config):
         data = self.new_data()
