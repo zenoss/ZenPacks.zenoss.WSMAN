@@ -44,6 +44,20 @@ def string_to_lines(string):
     return None
 
 
+def get_client(datasource, config):
+    conn_info = txwsman_util.ConnectionInfo(
+        hostname=config.manageIp,
+        auth_type='basic',
+        username=datasource.zWSMANUsername,
+        password=datasource.zWSMANPassword,
+        scheme='https' if datasource.zWSMANUseSSL is True else 'http',
+        port=int(datasource.zWSMANPort),
+        connectiontype='Keep-Alive',
+        keytab='')
+
+    return txwsman_enumerate.create_wsman_client(conn_info)
+
+
 class WSMANDataSource(PythonDataSource):
     """Datasource used to capture datapoints from WSMAN providers."""
 
@@ -171,33 +185,18 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
 
         return params
 
+    def __init__(self):
+        self.remote_client = None
+
     @defer.inlineCallbacks
     def collect(self, config):
-
         ds0 = config.datasources[0]
 
-        def conn_info(datasource, config):
-            ip = config.manageIp
-            username = datasource.zWSMANUsername
-            password = datasource.zWSMANPassword
-            auth_type = 'basic'
-            scheme = 'https' if datasource.zWSMANUseSSL is True else 'http'
-            port = int(datasource.zWSMANPort)
-            connectiontype = 'Keep-Alive'
-            keytab = ''
-            return txwsman_util.ConnectionInfo(ip,
-                                               auth_type,
-                                               username,
-                                               password,
-                                               scheme,
-                                               port,
-                                               connectiontype,
-                                               keytab)
 
-        connInfo = conn_info(ds0, config)
-        remote_client = txwsman_enumerate.create_wsman_client(connInfo)
+        if not self.remote_client:
+            self.remote_client = get_client(ds0, config)
 
-        result = yield remote_client.enumerate(
+        result = yield self.remote_client.enumerate(
             ds0.params['CIMClass'],
             wql=ds0.params['query'],
             namespace=ds0.params['namespace'],
@@ -289,3 +288,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         })
 
         return data
+
+    def cleanup(self, config):
+        if self.remote_client:
+            self.remote_client = None
