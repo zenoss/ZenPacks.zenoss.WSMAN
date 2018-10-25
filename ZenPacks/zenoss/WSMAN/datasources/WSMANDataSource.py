@@ -257,10 +257,10 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                 timestamp = 'N'
 
             for datapoint in datasource.points:
-                if hasattr(result, datapoint.id):
+                value = getattr(result, datapoint.id, None)
+                if value:
                     data['values'][component_id][datapoint.id] = \
-                        (getattr(result, datapoint.id), timestamp)
-
+                        (value, timestamp)
         data['events'].append({
             'eventClassKey': 'wsmanCollectionSuccess',
             'eventClass': ds0.eventClass,
