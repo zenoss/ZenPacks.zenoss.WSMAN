@@ -192,7 +192,6 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
     def collect(self, config):
         ds0 = config.datasources[0]
 
-
         if not self.remote_client:
             self.remote_client = get_client(ds0, config)
 
