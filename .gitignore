@@ -5,3 +5,4 @@ dist
 ZenPacks/zenoss/WSMAN/lib
 src
 *.swp
+.idea
