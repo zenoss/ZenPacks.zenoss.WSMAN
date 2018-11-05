@@ -223,20 +223,20 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         result_component_key = ds0.params['result_component_key']
 
         for result in results:
-            if result_component_key:
-                datasource = datasources.get(result[result_component_key])
-
+            component_key = getattr(result, result_component_key, None)
+            if component_key:
+                datasource = datasources.get(component_key)
                 if not datasource:
                     continue
             else:
                 datasource = ds0
 
-            if result_component_key and hasattr(result, result_component_key):
-                result_component_value = datasource.params.get(
-                    'result_component_value')
+            result_component_value = datasource.params.get(
+                'result_component_value')
 
-                if result_component_value != result[result_component_key]:
-                    continue
+            if result_component_value != component_key:
+                continue
+
             if datasource.component:
                 component_id = prepId(datasource.component)
             else:
@@ -246,13 +246,10 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             result_timestamp_key = datasource.params.get(
                 'result_timestamp_key')
 
-            timestamp = None
-
             if result_timestamp_key and result_timestamp_key in result:
                 cim_date = result[result_timestamp_key]
                 timestamp = calendar.timegm(cim_date.datetime.utctimetuple())
-
-            if not timestamp:
+            else:
                 timestamp = 'N'
 
             for datapoint in datasource.points:
