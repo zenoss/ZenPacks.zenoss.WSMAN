@@ -96,6 +96,22 @@ class MyWSMANPlugin(WSMANPlugin):
         return rm
 </code></pre>
 
+<h2 id="installed-items">Installed Items</h2>
+    <h3 id="configuration-properties">Configuration Properties</h3>
+    <ul>
+        <li> zWSMANCollectionInterval: Default interval (in seconds) between WSMAN datasource collections. (Default: 300)</li>
+        <li> zWSMANMaxObjectCount: Elements returned from the API per request. (Default: 50)</li>
+        <li> zWSMANPassword: Password for remote WSMAN service.</li>
+        <li> zWSMANPort: TCP Port of WSMAN service. (Default: 443)</li>
+        <li> zWSMANUsername: Username for remote WSMAN service. (Default: root)</li>
+        <li> zWSMANUseSSL: Use SSL for remote WSMAN service. (Default: true)</li>
+    </ul>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+    <ul>
+        <li>Incase iDRAC monitoring returns "WSMAN: running timeout", please increase zWSMANCollectionInterval value</li>
+    </ul>
+
 <h2 id="changes">Changes</h2>
 
 <h3 id="changes-1.0.4">1.0.4</h3>
