@@ -18,6 +18,7 @@ setzPropertyCategory('zWSMANUsername', ZPROPERTY_CATEGORY)
 setzPropertyCategory('zWSMANPassword', ZPROPERTY_CATEGORY)
 setzPropertyCategory('zWSMANUseSSL', ZPROPERTY_CATEGORY)
 setzPropertyCategory('zWSMANCollectionInterval', ZPROPERTY_CATEGORY)
+setzPropertyCategory('zWSMANMaxObjectCount', ZPROPERTY_CATEGORY)
 
 
 class ZenPack(ZenPackBase):
@@ -28,7 +29,8 @@ class ZenPack(ZenPackBase):
         ('zWSMANUsername', '', 'string'),
         ('zWSMANPassword', '', 'password'),
         ('zWSMANUseSSL', True, 'boolean'),
-        ('zWSMANCollectionInterval', 300, 'int')
+        ('zWSMANCollectionInterval', 300, 'int'),
+        ('zWSMANMaxObjectCount', 50, 'int'),
         ]
 
     packZProperties_data = {
@@ -60,6 +62,12 @@ class ZenPack(ZenPackBase):
             'category': ZPROPERTY_CATEGORY,
             'label': 'WSMAN Datasource Collection Interval',
             'description': 'Default interval (in seconds) between WSMAN datasource collections.',
+            'type': 'int',
+        },
+        'zWSMANMaxObjectCount': {
+            'category': ZPROPERTY_CATEGORY,
+            'label': 'WSMAN Max Objects per a Response',
+            'description': 'Elements returned from the API per a request.',
             'type': 'int',
         },
     }

@@ -15,6 +15,8 @@ import calendar
 from zope.component import adapts
 from zope.interface import implements
 
+from twisted.internet import defer
+
 from Products.ZenUtils.Utils import prepId
 from Products.Zuul.form import schema
 from Products.Zuul.infos import ProxyProperty
@@ -40,6 +42,20 @@ def string_to_lines(string):
         return string.splitlines()
 
     return None
+
+
+def get_client(datasource, config):
+    conn_info = txwsman_util.ConnectionInfo(
+        hostname=config.manageIp,
+        auth_type='basic',
+        username=datasource.zWSMANUsername,
+        password=datasource.zWSMANPassword,
+        scheme='https' if datasource.zWSMANUseSSL is True else 'http',
+        port=int(datasource.zWSMANPort),
+        connectiontype='Keep-Alive',
+        keytab='')
+
+    return txwsman_enumerate.create_wsman_client(conn_info)
 
 
 class WSMANDataSource(PythonDataSource):
@@ -121,7 +137,11 @@ class WSMANDataSourceInfo(RRDDataSourceInfo):
 
 class WSMANDataSourcePlugin(PythonDataSourcePlugin):
     proxy_attributes = (
-        'zWSMANPort', 'zWSMANUsername', 'zWSMANPassword', 'zWSMANUseSSL',
+        'zWSMANPort',
+        'zWSMANUsername',
+        'zWSMANPassword',
+        'zWSMANUseSSL',
+        'zWSMANMaxObjectCount',
         )
 
     @classmethod
@@ -165,43 +185,23 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
 
         return params
 
-    def collect(self, config):
+    def __init__(self):
+        self.remote_client = None
 
+    @defer.inlineCallbacks
+    def collect(self, config):
         ds0 = config.datasources[0]
 
-        def conn_info(datasource, config):
-            ip = config.manageIp
-            username = datasource.zWSMANUsername
-            password = datasource.zWSMANPassword
-            auth_type = 'basic'
-            scheme = 'https' if datasource.zWSMANUseSSL is True else 'http'
-            port = int(datasource.zWSMANPort)
-            connectiontype = 'Keep-Alive'
-            keytab = ''
-            return txwsman_util.ConnectionInfo(ip,
-                                               auth_type,
-                                               username,
-                                               password,
-                                               scheme,
-                                               port,
-                                               connectiontype,
-                                               keytab)
+        if not self.remote_client:
+            self.remote_client = get_client(ds0, config)
 
-        def client(conn_info):
-            return txwsman_enumerate.create_wsman_client(conn_info)
+        result = yield self.remote_client.enumerate(
+            ds0.params['CIMClass'],
+            wql=ds0.params['query'],
+            namespace=ds0.params['namespace'],
+            maxelements=ds0.zWSMANMaxObjectCount)
 
-        def create_enum_info(className, wql=None, namespace=None):
-            return txwsman_util.create_enum_info(className, wql, namespace)
-
-        connInfo = conn_info(ds0, config)
-        remote_client = client(connInfo)
-        enumInfo = create_enum_info(ds0.params['CIMClass'],
-                                    ds0.params['query'],
-                                    ds0.params['namespace'])
-
-        # Do Enumerate expects an array of enumInfo objects
-        d = remote_client.do_enumerate([enumInfo])
-        return d
+        defer.returnValue({ds0.params['CIMClass']: result})
 
     def onSuccess(self, results, config):
         data = self.new_data()
@@ -223,20 +223,20 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         result_component_key = ds0.params['result_component_key']
 
         for result in results:
-            if result_component_key:
-                datasource = datasources.get(result[result_component_key])
-
+            component_key = getattr(result, result_component_key, None)
+            if component_key:
+                datasource = datasources.get(component_key)
                 if not datasource:
                     continue
             else:
                 datasource = ds0
 
-            if result_component_key and hasattr(result, result_component_key):
-                result_component_value = datasource.params.get(
-                    'result_component_value')
+            result_component_value = datasource.params.get(
+                'result_component_value')
 
-                if result_component_value != result[result_component_key]:
-                    continue
+            if result_component_value != component_key:
+                continue
+
             if datasource.component:
                 component_id = prepId(datasource.component)
             else:
@@ -246,13 +246,10 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             result_timestamp_key = datasource.params.get(
                 'result_timestamp_key')
 
-            timestamp = None
-
             if result_timestamp_key and result_timestamp_key in result:
                 cim_date = result[result_timestamp_key]
                 timestamp = calendar.timegm(cim_date.datetime.utctimetuple())
-
-            if not timestamp:
+            else:
                 timestamp = 'N'
 
             for datapoint in datasource.points:
@@ -287,3 +284,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         })
 
         return data
+
+    def cleanup(self, config):
+        if self.remote_client:
+            self.remote_client = None
