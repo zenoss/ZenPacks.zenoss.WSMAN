@@ -92,6 +92,9 @@ class WSMANPlugin(PythonPlugin):
         if more complex collection is required.
         '''
 
+        if not device.zWSMANUseSSL:
+            log.warning("SSL not enabled for %s", device.id)
+
         conn_info = self.conn_info(device)
         client = self.client(conn_info)
 
