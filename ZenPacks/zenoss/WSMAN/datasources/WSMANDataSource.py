@@ -45,6 +45,9 @@ def string_to_lines(string):
 
 
 def get_client(datasource, config):
+    if not datasource.zWSMANUseSSL:
+        log.warning("SSL not enabled for %s", config.id)
+
     conn_info = txwsman_util.ConnectionInfo(
         hostname=config.manageIp,
         auth_type='basic',
