@@ -94,6 +94,22 @@ class WSMANPlugin(PythonPlugin):
 
         if not device.zWSMANUseSSL:
             log.warning("SSL not enabled for %s", device.id)
+            self._eventService.sendEvent({
+                'device': device.id,
+                'eventKey': "{}|{}".format(device.id, 'wsmanCollectSsl'),
+                'eventClassKey': 'wsmanCollect',
+                'severity': ZenEventClasses.Warning,
+                'summary': 'WSMAN: SSL not enabled',
+                'message': 'SSL not enabled for {}'.format(device.id),
+            })
+        else
+            self._eventService.sendEvent({
+                'device': device.id,
+                'eventKey': "{}|{}".format(device.id, 'wsmanCollectSsl'),
+                'eventClassKey': 'wsmanCollect',
+                'severity': ZenEventClasses.Clear,
+                'summary': 'WSMAN: SSL enabled',
+            })
 
         conn_info = self.conn_info(device)
         client = self.client(conn_info)
