@@ -23,6 +23,9 @@ from Products.Zuul.infos import ProxyProperty
 from Products.Zuul.infos.template import RRDDataSourceInfo
 from Products.Zuul.interfaces import IRRDDataSourceInfo
 from Products.Zuul.utils import ZuulMessageFactory as _t
+from Products.ZenEvents import ZenEventClasses
+from Products.ZenCollector.interfaces import IEventService
+from zope.component import getUtility
 
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSource, PythonDataSourcePlugin
@@ -45,6 +48,29 @@ def string_to_lines(string):
 
 
 def get_client(datasource, config):
+    eventService = getUtility(IEventService)
+
+    if not datasource.zWSMANUseSSL:
+        log.warning("SSL not enabled for %s", config.id)
+        eventService.sendEvent({
+            'device': config.id,
+            'eventKey': "{}|{}".format(config.id, 'wsmanCollectSsl'),
+            'eventClass': config.datasources[0].eventClass,
+            'eventClassKey': 'wsmanCollect',
+            'severity': ZenEventClasses.Warning,
+            'summary': 'WSMAN: SSL not enabled',
+            'message': 'SSL not enabled for {}'.format(config.id),
+        })
+    else:
+        eventService.sendEvent({
+            'device': config.id,
+            'eventKey': "{}|{}".format(config.id, 'wsmanCollectSsl'),
+            'eventClass': config.datasources[0].eventClass,
+            'eventClassKey': 'wsmanCollect',
+            'severity': ZenEventClasses.Clear,
+            'summary': 'WSMAN: SSL enabled',
+        })
+
     conn_info = txwsman_util.ConnectionInfo(
         hostname=config.manageIp,
         auth_type='basic',
