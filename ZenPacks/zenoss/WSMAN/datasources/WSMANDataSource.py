@@ -225,6 +225,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         for result in results:
             component_key = getattr(result, result_component_key, None)
             if component_key:
+                component_key = prepId(component_key)
                 datasource = datasources.get(component_key)
                 if not datasource:
                     continue
