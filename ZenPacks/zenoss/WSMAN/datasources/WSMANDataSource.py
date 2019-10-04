@@ -183,6 +183,8 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         params['result_timestamp_key'] = datasource.talesEval(
             datasource.result_timestamp_key, context)
 
+        params['status_maps'] = getattr(context, 'status_maps', {})
+
         return params
 
     def __init__(self):
