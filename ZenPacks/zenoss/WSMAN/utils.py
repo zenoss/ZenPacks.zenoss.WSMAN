@@ -38,7 +38,8 @@ def result_errmsg(result):
 #            else:
 #                return result.value.args[1]
         else:
-            return result.getErrorMessage()
+            return result.getErrorMessage() + "."\
+                   ' Check IP and zWSMANPort and SSL Settings'
     except AttributeError:
         pass
 
