@@ -102,7 +102,7 @@ class WSMANPlugin(PythonPlugin):
                 'summary': 'WSMAN: SSL not enabled',
                 'message': 'SSL not enabled for {}'.format(device.id),
             })
-        else
+        else:
             self._eventService.sendEvent({
                 'device': device.id,
                 'eventKey': "{}|{}".format(device.id, 'wsmanCollectSsl'),
