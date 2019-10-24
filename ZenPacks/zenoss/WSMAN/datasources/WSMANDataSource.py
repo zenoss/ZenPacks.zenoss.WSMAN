@@ -282,9 +282,11 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                 timestamp = 'N'
 
             for datapoint in datasource.points:
-                if hasattr(result, datapoint.id):
+                if getattr(result, datapoint.id, None):
                     data['values'][component_id][datapoint.id] = \
                         (getattr(result, datapoint.id), timestamp)
+                else:
+                    log.debug("%s datapoint doesn't exist or contains None value", datapoint.id)
 
         data['events'].append({
             'eventClassKey': 'wsmanCollectionSuccess',
