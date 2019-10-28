@@ -209,6 +209,8 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         params['result_timestamp_key'] = datasource.talesEval(
             datasource.result_timestamp_key, context)
 
+        params['status_maps'] = getattr(context, 'status_maps', {})
+
         return params
 
     def __init__(self):
@@ -251,6 +253,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         for result in results:
             component_key = getattr(result, result_component_key, None)
             if component_key:
+                component_key = prepId(component_key)
                 datasource = datasources.get(component_key)
                 if not datasource:
                     continue
@@ -279,9 +282,11 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                 timestamp = 'N'
 
             for datapoint in datasource.points:
-                if hasattr(result, datapoint.id):
+                if getattr(result, datapoint.id, None):
                     data['values'][component_id][datapoint.id] = \
                         (getattr(result, datapoint.id), timestamp)
+                else:
+                    log.debug("%s datapoint doesn't exist or contains None value", datapoint.id)
 
         data['events'].append({
             'eventClassKey': 'wsmanCollectionSuccess',
