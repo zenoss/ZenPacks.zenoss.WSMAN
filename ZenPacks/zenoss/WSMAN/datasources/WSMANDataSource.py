@@ -23,6 +23,9 @@ from Products.Zuul.infos import ProxyProperty
 from Products.Zuul.infos.template import RRDDataSourceInfo
 from Products.Zuul.interfaces import IRRDDataSourceInfo
 from Products.Zuul.utils import ZuulMessageFactory as _t
+from Products.ZenEvents import ZenEventClasses
+from Products.ZenCollector.interfaces import IEventService
+from zope.component import getUtility
 
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSource, PythonDataSourcePlugin
@@ -45,6 +48,29 @@ def string_to_lines(string):
 
 
 def get_client(datasource, config):
+    eventService = getUtility(IEventService)
+
+    if not datasource.zWSMANUseSSL:
+        log.warning("SSL not enabled for %s", config.id)
+        eventService.sendEvent({
+            'device': config.id,
+            'eventKey': "{}|{}".format(config.id, 'wsmanCollectSsl'),
+            'eventClass': config.datasources[0].eventClass,
+            'eventClassKey': 'wsmanCollect',
+            'severity': ZenEventClasses.Warning,
+            'summary': 'WSMAN: SSL not enabled',
+            'message': 'SSL not enabled for {}'.format(config.id),
+        })
+    else:
+        eventService.sendEvent({
+            'device': config.id,
+            'eventKey': "{}|{}".format(config.id, 'wsmanCollectSsl'),
+            'eventClass': config.datasources[0].eventClass,
+            'eventClassKey': 'wsmanCollect',
+            'severity': ZenEventClasses.Clear,
+            'summary': 'WSMAN: SSL enabled',
+        })
+
     conn_info = txwsman_util.ConnectionInfo(
         hostname=config.manageIp,
         auth_type='basic',
@@ -183,6 +209,8 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         params['result_timestamp_key'] = datasource.talesEval(
             datasource.result_timestamp_key, context)
 
+        params['status_maps'] = getattr(context, 'status_maps', {})
+
         return params
 
     def __init__(self):
@@ -225,6 +253,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         for result in results:
             component_key = getattr(result, result_component_key, None)
             if component_key:
+                component_key = prepId(component_key)
                 datasource = datasources.get(component_key)
                 if not datasource:
                     continue
@@ -253,9 +282,11 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
                 timestamp = 'N'
 
             for datapoint in datasource.points:
-                if hasattr(result, datapoint.id):
+                if getattr(result, datapoint.id, None):
                     data['values'][component_id][datapoint.id] = \
                         (getattr(result, datapoint.id), timestamp)
+                else:
+                    log.debug("%s datapoint doesn't exist or contains None value", datapoint.id)
 
         data['events'].append({
             'eventClassKey': 'wsmanCollectionSuccess',

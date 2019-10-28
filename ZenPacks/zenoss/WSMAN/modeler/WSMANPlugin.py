@@ -32,6 +32,10 @@ from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 
 from ZenPacks.zenoss.WSMAN.utils import addLocalLibPath
 
+from Products.ZenEvents import ZenEventClasses
+from Products.ZenCollector.interfaces import IEventService
+from zope.component import getUtility
+
 addLocalLibPath()
 
 import txwsman
@@ -91,6 +95,26 @@ class WSMANPlugin(PythonPlugin):
         This method should be overridden
         if more complex collection is required.
         '''
+
+        eventService = getUtility(IEventService)
+        if not device.zWSMANUseSSL:
+            log.warning("SSL not enabled for %s", device.id)
+            eventService.sendEvent({
+                'device': device.id,
+                'eventKey': "{}|{}".format(device.id, 'wsmanCollectSsl'),
+                'eventClassKey': 'wsmanCollect',
+                'severity': ZenEventClasses.Warning,
+                'summary': 'WSMAN: SSL not enabled',
+                'message': 'SSL not enabled for {}'.format(device.id),
+            })
+        else:
+            eventService.sendEvent({
+                'device': device.id,
+                'eventKey': "{}|{}".format(device.id, 'wsmanCollectSsl'),
+                'eventClassKey': 'wsmanCollect',
+                'severity': ZenEventClasses.Clear,
+                'summary': 'WSMAN: SSL enabled',
+            })
 
         conn_info = self.conn_info(device)
         client = self.client(conn_info)
