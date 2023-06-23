@@ -32,7 +32,7 @@ src:
 	mkdir src
 
 src/txwsman: src
-	cd src; git clone https://github.com/zenoss/txwsman.git
+	cd src; git clone git@github.com:zenoss/txwsman.git
 
 clean:
 	rm -rf lib build dist *.egg-info $(LIB_DIR)/txwsman src
