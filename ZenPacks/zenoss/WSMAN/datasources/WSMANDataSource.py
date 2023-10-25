@@ -291,6 +291,7 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
         data['events'].append({
             'eventClassKey': 'wsmanCollectionSuccess',
             'eventClass': ds0.eventClass if ds0.eventClass else '/Status/PowerEdge',
+            'component': ds0.component,
             'eventKey': eventKey(config),
             'summary': 'WSMAN: successful collection',
             'device': config.id,
@@ -309,7 +310,10 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             'eventClassKey': 'wsmanCollectionError',
             'eventClass': ds0.eventClass if ds0.eventClass else '/Status/PowerEdge',
             'eventKey': eventKey(config),
-            'summary': errmsg,
+            'component': ds0.component,
+            'summary': 'Unsuccessful collection for a datasource - {}. '
+                       'Check event details for the error message.'.format(ds0.datasource),
+            'message': errmsg,
             'device': config.id,
             'severity': ds0.severity,
         })
