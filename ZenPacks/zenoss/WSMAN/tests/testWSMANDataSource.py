@@ -55,7 +55,6 @@ class TestWSMANDataSourcePlugin(BaseTestCase):
         self.assertEquals(len(data['values']), 6)
         self.assertEquals(len(data['events']), 1)
         self.assertEquals(event['severity'], ZenEventClasses.Clear)
-
         # plugin will return empty string as an eventClass, but it will be
         # transformed to '/Status/PowerEdge'. So empty string is expected behaviour in
         # this case
@@ -70,7 +69,6 @@ class TestWSMANDataSourcePlugin(BaseTestCase):
         self.assertEquals(len(data['values']), 0)
         self.assertEquals(len(data['events']), 1)
         self.assertEquals(event['severity'], ZenEventClasses.Error)
-
         # plugin will return empty string as an eventClass, but it will be
         # transformed to '/Status/PowerEdge'. So empty string is expected behaviour in
         # this case

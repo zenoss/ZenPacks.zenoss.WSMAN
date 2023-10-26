@@ -309,7 +309,9 @@ class WSMANDataSourcePlugin(PythonDataSourcePlugin):
             'eventClassKey': 'wsmanCollectionError',
             'eventClass': ds0.eventClass if ds0.eventClass else '/Status/PowerEdge',
             'eventKey': eventKey(config),
-            'summary': errmsg,
+            'summary': 'Unsuccessful collection for a datasource - {}. '
+                       'Check event details for the error message.'.format(ds0.datasource),
+            'message': errmsg,
             'device': config.id,
             'severity': ds0.severity,
         })

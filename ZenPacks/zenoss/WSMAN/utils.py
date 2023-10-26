@@ -31,7 +31,7 @@ def result_errmsg(result):
             return 'connection timeout.'\
                    ' Check IP and zWSMANPort and SSL Settings'
         elif result.type == NameError:
-            return 'Invalid CIM Class.  Class not found.'
+            return 'Invalid CIM Class. Class not found.'
 #        elif result.type == CIMError:
 #            if '401' in result.value.args[1]:
 #                return 'login failed. Check zWSMANUsername and zWSMANPassword'
@@ -49,4 +49,4 @@ def result_errmsg(result):
 def eventKey(config):
     '''Given a config, return an appropriate eventKey.'''
     ds0 = config.datasources[0]
-    return '%s|%s|%s' % (ds0.plugin_classname, ds0.cycletime, ds0.datasource)
+    return '%s|%s|%s' % (ds0.plugin_classname, ds0.params.get('CIMClass', ''), ds0.datasource)
