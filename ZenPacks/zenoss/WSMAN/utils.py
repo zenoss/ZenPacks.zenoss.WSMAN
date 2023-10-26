@@ -49,4 +49,4 @@ def result_errmsg(result):
 def eventKey(config):
     '''Given a config, return an appropriate eventKey.'''
     ds0 = config.datasources[0]
-    return '%s|%s|%s' % (ds0.plugin_classname, ds0.component, ds0.datasource)
+    return '%s|%s|%s' % (ds0.plugin_classname, ds0.params.get('CIMClass', ''), ds0.datasource)
