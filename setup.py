@@ -19,7 +19,6 @@ import os
 from subprocess import Popen, PIPE
 from setuptools import setup, find_packages
 
-
 # Run "make build" if a GNUmakefile is present.
 if os.path.isfile('GNUmakefile'):
     print 'GNUmakefile found. Running "make build" ..'
