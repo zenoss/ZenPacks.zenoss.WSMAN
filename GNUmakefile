@@ -27,9 +27,14 @@ build:
 	cp -r $(TXWSMAN_DIR)/txwsman/*.py $(LIB_DIR)/txwsman/
 	cp -r $(TXWSMAN_DIR)/txwsman/request/*.xml $(LIB_DIR)/txwsman/request/
 
+<<<<<<< HEAD
 .PHONY: dependencies
 update:
 	git submodule update --remote --merge
+=======
+src/txwsman: src
+	cd src; git clone git@github.com:zenoss/txwsman.git
+>>>>>>> master
 
 .PHONY: clean
 clean:
