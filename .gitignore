@@ -3,6 +3,5 @@ dist
 *.egg-info
 *.pyc
 ZenPacks/zenoss/WSMAN/lib
-src
 *.swp
 .idea
