@@ -1,0 +1,4 @@
+[submodule "src/txwsman"]
+	path = src/txwsman
+	url = git@github.com:zenoss/txwsman
+	branch = master
